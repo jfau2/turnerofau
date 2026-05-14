@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 # 1. CONFIGURACIÓN Y BASE DE DATOS
-PROFESIONALES = ["Secretaria Académica"] # Corregido el typo de 'Secreataria'
+PROFESIONALES = ["Secretaría FAU"] 
 PASSWORD_PRO = "salta2026"
 DB_FILE = "turnos_db.csv"
 
@@ -20,7 +20,7 @@ def guardar_datos(df):
 
 HORARIOS = [f"{h:02d}:{m:02d}" for h in range(9, 14) for m in (0, 30)] + ["14:00"]
 
-st.set_page_config(page_title="Gestión de Turnos", layout="wide")
+st.set_page_config(page_title="Gestión de Turnos FAU", layout="wide")
 
 # --- ESTILO INSTITUCIONAL ---
 st.markdown("""
@@ -56,7 +56,8 @@ menu = st.sidebar.radio("Navegación", ["Reserva de Turnos", "Panel Administrati
 
 # --- VISTA: RESERVA DE TURNOS ---
 if menu == "Reserva de Turnos":
-    st.markdown('<div class="main-header"><h1>SISTEMA DE TURNOS DOCENTES</h1></div>', unsafe_allow_html=True)
+    # CAMBIO DE NOMBRE AQUÍ:
+    st.markdown('<div class="main-header"><h1>SISTEMA DE TURNOS FAU</h1></div>', unsafe_allow_html=True)
     
     col_izq, col_der = st.columns([2, 1], gap="large")
 
@@ -87,7 +88,7 @@ if menu == "Reserva de Turnos":
                 elif not nombre:
                     st.warning("Debe ingresar su nombre completo.")
                 else:
-                    # CORRECCIÓN 1: ID ÚNICO CON MICROSEGUNDOS (%f)
+                    # ID ROBUSTO CON MICROSEGUNDOS
                     nuevo_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
                     nuevo = pd.DataFrame({
                         "ID": [nuevo_id],
@@ -130,8 +131,7 @@ else:
                     st.write(f"Estado: {row['Estado']}")
                     
                     c1, c2 = st.columns(2)
-                    
-                    # CORRECCIÓN 2: KEYS ÚNICAS PARA LOS BOTONES USANDO EL ÍNDICE
+                    # KEYS ÚNICAS CON ID + INDEX
                     if c1.button("Confirmar", key=f"conf_{row['ID']}_{index}"):
                         df.loc[df["ID"] == row["ID"], "Estado"] = "Confirmado"
                         guardar_datos(df)
