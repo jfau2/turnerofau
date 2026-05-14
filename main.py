@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 # 1. CONFIGURACIÓN Y BASE DE DATOS
-PROFESIONALES = ["Secreataria Acedemica"]
+PROFESIONALES = ["Secretaria Académica"] # Corregido el typo de 'Secreataria'
 PASSWORD_PRO = "salta2026"
 DB_FILE = "turnos_db.csv"
 
@@ -64,7 +64,6 @@ if menu == "Reserva de Turnos":
         st.subheader("Solicitud de Turno")
         df = cargar_datos()
         
-        # Mostrar mensaje de éxito previo si existe en la sesión
         if 'ultimo_turno' in st.session_state:
             st.success(f"EL TURNO SE REGISTRÓ CORRECTAMENTE: {st.session_state['ultimo_turno']}")
         
@@ -88,7 +87,8 @@ if menu == "Reserva de Turnos":
                 elif not nombre:
                     st.warning("Debe ingresar su nombre completo.")
                 else:
-                    nuevo_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                    # CORRECCIÓN 1: ID ÚNICO CON MICROSEGUNDOS (%f)
+                    nuevo_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
                     nuevo = pd.DataFrame({
                         "ID": [nuevo_id],
                         "Profesional": [prof], "Fecha": [fecha_str], "Hora": [hora_sel],
@@ -97,7 +97,6 @@ if menu == "Reserva de Turnos":
                     df = pd.concat([df, nuevo], ignore_index=True)
                     guardar_datos(df)
                     
-                    # Guardar en sesión para que el mensaje no desaparezca inmediatamente
                     st.session_state['ultimo_turno'] = f"{nombre} - {fecha_str} a las {hora_sel}"
                     st.rerun()
 
@@ -131,11 +130,13 @@ else:
                     st.write(f"Estado: {row['Estado']}")
                     
                     c1, c2 = st.columns(2)
-                    if c1.button("Confirmar", key=f"conf_{row['ID']}"):
+                    
+                    # CORRECCIÓN 2: KEYS ÚNICAS PARA LOS BOTONES USANDO EL ÍNDICE
+                    if c1.button("Confirmar", key=f"conf_{row['ID']}_{index}"):
                         df.loc[df["ID"] == row["ID"], "Estado"] = "Confirmado"
                         guardar_datos(df)
                         st.rerun()
-                    if c2.button("Eliminar", key=f"del_{row['ID']}"):
+                    if c2.button("Eliminar", key=f"del_{row['ID']}_{index}"):
                         df = df[df["ID"] != row["ID"]]
                         guardar_datos(df)
                         st.rerun()
