@@ -117,45 +117,43 @@ else:
     pw = st.text_input("Ingrese la clave de acceso:", type="password")
     
     if pw == PASSWORD_PRO:
-        try:
-            df = cargar_datos()
-            # Convertimos todo a texto para evitar errores de lectura de tablas
-            df = df.astype(str) 
+        # Cargamos los datos siempre al inicio del panel
+        df_admin = cargar_datos()
+        
+        filtro_prof = st.selectbox("Ver turnos de:", PROFESIONALES)
+        # Filtrar
+        turnos_filtrados = df_admin[df_admin["Profesional"] == filtro_prof].copy()
+        
+        if turnos_filtrados.empty:
+            st.info("No hay turnos registrados.")
+        else:
+            # Usamos un contador manual para las keys por seguridad extra
+            for index, row in turnos_filtrados.iterrows():
+                with st.expander(f"{row['Fecha']} | {row['Hora']} - {row['Cliente']}"):
+                    st.write(f"**Motivo:** {row['Motivo']}")
+                    st.write(f"**Estado actual:** {row['Estado']}")
+                    
+                    c1, c2 = st.columns(2)
+                    
+                    # BOTÓN CONFIRMAR
+                    if c1.button("Confirmar Turno", key=f"btn_conf_{row['ID']}_{index}"):
+                        # Operación directa sobre el dataframe original
+                        df_admin.loc[df_admin["ID"] == row["ID"], "Estado"] = "Confirmado"
+                        guardar_datos(df_admin)
+                        st.success("Estado actualizado.")
+                        st.rerun() # Forzar recarga
+                    
+                    # BOTÓN ELIMINAR
+                    if c2.button("Eliminar Turno", key=f"btn_del_{row['ID']}_{index}"):
+                        # Filtrar para quitar el ID actual
+                        df_final = df_admin[df_admin["ID"] != row["ID"]]
+                        guardar_datos(df_final)
+                        st.warning("Turno eliminado.")
+                        st.rerun() # Forzar recarga
             
-            filtro_prof = st.selectbox("Ver turnos de:", PROFESIONALES)
-            turnos_filtrados = df[df["Profesional"] == filtro_prof].copy()
+            st.divider()
+            st.write("### Resumen General")
+            st.table(turnos_filtrados.astype(str))
             
-            if turnos_filtrados.empty:
-                st.info("No hay turnos registrados.")
-            else:
-                for index, row in turnos_filtrados.iterrows():
-                    with st.expander(f"{row['Fecha']} | {row['Hora']} - {row['Cliente']}"):
-                        st.write(f"Motivo: {row['Motivo']}")
-                        st.write(f"Estado: {row['Estado']}")
-                        
-                        c1, c2 = st.columns(2)
-                        if c1.button("Confirmar", key=f"conf_{row['ID']}_{index}"):
-                            # Volvemos a cargar para asegurar datos frescos
-                            df_mod = cargar_datos()
-                            df_mod.loc[df_mod["ID"] == row["ID"], "Estado"] = "Confirmado"
-                            guardar_datos(df_mod)
-                            st.rerun()
-                        if c2.button("Eliminar", key=f"del_{row['ID']}_{index}"):
-                            df_mod = cargar_datos()
-                            df_mod = df_mod[df_mod["ID"] != row["ID"]]
-                            guardar_datos(df_mod)
-                            st.rerun()
-                
-                st.divider()
-                st.write("### Vista de Tabla")
-                # Usamos st.table que es más estable que st.dataframe para datos mixtos
-                st.table(turnos_filtrados)
-        except Exception as e:
-            st.error("Hubo un problema con la base de datos. Se intentará restablecer.")
-            if st.button("Limpiar Base de Datos"):
-                if os.path.exists(DB_FILE):
-                    os.remove(DB_FILE)
-                st.rerun()
-                
     elif pw != "":
         st.error("Contraseña incorrecta")
